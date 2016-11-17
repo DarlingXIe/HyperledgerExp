@@ -1,0 +1,19 @@
+{
+  "name": "hyperledgerpeerintf",
+  "version": "1.0.0",
+  "description": "hyper ledger peer interface",
+  "main": "hyperledgerpeerintf.js",
+  "dependencies": {
+    "async": "^2.0.1",
+    "child_process": "^1.0.2",
+    "request": "^2.74.0"
+  },
+  "devDependencies": {
+    "fs": "0.0.1-security"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC"
+}

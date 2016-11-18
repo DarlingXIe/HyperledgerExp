@@ -14,7 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-var App = angular.module("explorer", ['ngAnimate']);
+var App = angular.module("explorer", ['ngAnimate']) .filter('split', function() {
+        return function(input, splitChar, splitIndex) {
+            // do some bounds checking here to ensure it has that index
+            return input.split(splitChar)[splitIndex];
+        }
+    });
+	
 const REST_ENDPOINT = '';
 
 // http request to get get chain information
@@ -139,18 +145,23 @@ App.factory("SHARE_INFORMATION", function($rootScope){
 				if(latestBlock > 0)
 					for( var i = latestBlock; i < ledgerData.blocks.length; i++) {
 						ledgerData.blocks[i].cssClass= undefined;
-						for( var j = 0; j < ledgerData.blocks[i].transactions.length; j++) {
-							ledgerData.blocks[i].transactions[j].cssClass=undefined;
-						}
+						if(ledgerData.blocks[i].transactions)
+							for( var j = 0; j < ledgerData.blocks[i].transactions.length; j++) {
+								ledgerData.blocks[i].transactions[j].cssClass=undefined;
+							}
 					}
 				latestBlock = ledgerData.blocks.length;
 				for( var i = 0; i < data.blocks.length; i++) {
 					data.blocks[i].cssClass='fade';
-					for( var j = 0; j < data.blocks[i].transactions.length; j++) {
-						data.blocks[i].transactions[j].cssClass='fade';
-					}
+					if(data.blocks[i].transactions)
+						for( var j = 0; j < data.blocks[i].transactions.length; j++) {
+							data.blocks[i].transactions[j].cssClass='fade';
+						}
 				}
 				ledgerData.blocks = ledgerData.blocks.concat(data.blocks);
+			}
+			if(data.chainCodes) {
+				ledgerData.chainCodes = data.chainCodes;
 			}
 			BlockInfo.chain = data.chain;
 			rc.$broadcast("handle_broadcast_upd");
@@ -897,6 +908,386 @@ App.controller("TRANSACTIONS",
 			document.forms["change3"].submit();
 		}
 })
+
+App.controller("CHAINCODES",
+ 	function(SHARE_INFORMATION, $scope, $http, $compile){
+
+ 		// loading icon, is displayed while data is loading
+		$scope.loader= {
+			loading: true,
+		};
+		$scope.hideloader = function(){
+			$scope.loader.loading = false;
+		}
+		
+		var icons = {
+		  header: "redFont ui-icon-circle-arrow-e",
+		  activeHeader: "greenFont ui-icon-circle-arrow-s"
+		};
+		
+		$scope.status = '';
+		
+		// handle recieving information from the BLOCKS controller that initally calls the http requests
+ 		$scope.$on("handle_broadcast",function(){
+ 			
+			if($scope.chainCodes) {
+				for(var i = 0; i < $scope.chainCodes.length; i++) {
+					if($scope.chainCodes[i] && ledgerData.chainCodes[i]) {
+						$scope.chainCodes[i].status = ledgerData.chainCodes[i].status;
+						$scope.chainCodes[i].txCount = ledgerData.chainCodes[i].txCount;
+					}
+				}
+				return;
+			}
+			
+			$scope.chainCodes = ledgerData.chainCodes;
+ 			$scope.hideloader();
+			$scope.$apply();
+	
+			$( "#chainCodes" ).accordion( { "active":"false","icons":icons,collapsible: true,heightStyle: "content"});
+			
+ 		});
+		
+		var copyFormValuesToModel = function () {
+			var modelIdx = 0;
+			for(var j = 0; j < $scope.fields.length; j++) {
+				if($scope.fields[j].type != 'A') {
+					$scope.chainCodeArgs[modelIdx++].value = $scope.fields[j].value;
+				} else {
+					for(var k = 0; k < $scope.chainCodeArgs[modelIdx].value.length; k++) {
+						$scope.chainCodeArgs[modelIdx].value[k] = $scope.fields[j++].value;
+					}
+				}
+			}
+		}
+		$scope.modRow = function(act) {
+			
+			//save values first
+			copyFormValuesToModel();
+			
+			var id = event.target.parentNode.id;
+			var field = id.split('[');
+			var fieldName = field[0];
+			var idx = field[1].split(']')[0];
+			var d = $scope.chainCodeArgs;
+			var done = false;
+			for(var i = 0; !done && i < d.length; i++) {
+				if(d[i].name == fieldName) {
+					if(act == 'A') {
+						d[i].value.splice(idx+1,0, "");
+					} else if(d[i].value.length > 1) {
+						d[i].value.splice(idx,1);
+					}
+				}
+			}
+			
+			$scope.fields = [];
+			$scope.normalizeFields();
+		}
+		
+		
+		$scope.dlgOper = null;
+		$scope.fields = [];
+		$scope.chainCodeArgs = [];
+		
+		$scope.chainCodeInvoke = function(type,lang,id,func) {
+			$scope.dlgOper = null;
+			$scope.status = '';
+			$scope.resp = null;
+			$('#ccResults').html('');
+			$scope.dataShow = false;
+			$scope.chainCodeId = ledgerData.chainCodes[id].id;
+			$scope.chainCodeOper = type;
+			$scope.chainCodeArgs = [];
+			if(type == "Deploy")
+				$scope.dlgOper = "Deploy";
+			else if (type == "Query")
+				$scope.dlgOper = "Query";
+			else
+				$scope.dlgOper = "Invoke";
+			var paramPos = 0;
+			if(lang == 'Java')
+				paramPos = 1;
+			var splitRegEx = /[ 	]+/;
+			var arr = event.target.innerHTML.split(',')
+			var done = false;
+			for(var i = 1; i < arr.length && !done; i++) {
+				if(arr[i].indexOf(')') > 0 ) {
+					var a = arr[i].trim().split(')');
+					//console.log(a[0]);
+					done = true;
+					if(a[0] . indexOf('[') > 0) {
+						a[0] = a[0].replace(/[\[\]]/g,'').trim();
+						$scope.chainCodeArgs.push(
+							{
+								"name" : a[0].split(splitRegEx)[paramPos],
+								"value": [""],
+								"type" : "A"
+							}
+						)
+					} else {
+							$scope.chainCodeArgs.push(
+							{
+								"name" : a[0].trim().split(splitRegEx)[patamPos],
+								"value": ""
+							}
+						)
+					}
+				} else if(arr[i] . indexOf('[') > 0) {
+						arr[0] = arr[0].replace(/[\[\]]/g,'').trim();
+						$scope.chainCodeArgs.push(
+							{
+								"name" : arr[i].split(splitRegEx)[paramPos],
+								"value": [""],
+								"type" : "A"
+							}
+						)
+				} else {
+					//console.log(arr[i]);
+					arr[i] = arr[i].trim();
+					$scope.chainCodeArgs.push(
+						{
+							"name" : arr[i].split(splitRegEx)[paramPos].trim(),
+							"value": func
+						}
+					)
+					if(func)
+						func = "";//only for the first parameter
+				}
+			}
+			$scope.fields = [];
+			$scope.normalizeFields();
+			try {
+				chainCodeDialog.dialog( "close" );
+			} catch(e) {
+				
+			}
+			chainCodeDialog.dialog({'title':ledgerData.chainCodes[id].name + ' '+$scope.dlgOper});
+			chainCodeDialog.dialog("open");
+		}
+		
+		$scope.normalizeFields = function() {
+			for(var i =0 ;i < $scope.chainCodeArgs.length; i++) {
+				if($scope.chainCodeArgs[i].type == 'A') {
+					for (var j = 0; j < $scope.chainCodeArgs[i].value.length; j++) {
+						$scope.fields.push({ "name" : $scope.chainCodeArgs[i].name+'['+j+']', "value": $scope.chainCodeArgs[i].value[j] , "type" : "A"});
+					}
+				} else
+					$scope.fields.push({ "name" : $scope.chainCodeArgs[i].name, "value": $scope.chainCodeArgs[i].value });
+			}
+		}
+		
+		$scope.getChainCode = function(id) {
+			if(!ledgerData.chainCodes[id].srcCode) {
+				console.log(id);
+				$.ajax( REST_ENDPOINT +"/chainCode/src/:"+ ledgerData.chainCodes[id].id )
+				  .done(function(d) {
+					if(ledgerData.chainCodes[id].lang == 'go')
+						ledgerData.chainCodes[id].srcCode = d.replace(/\/\*/g,'<span class="ChainCodeComm">\/\*').replace(/\*\//g,'\*\/</span>')
+						.replace(/(\/\/.*)\n/g,'<span class="ChainCodeComm">$1</span>\n')
+						.replace(/(.*func.*Init.*{.*)\n/i,'<a title="Deploy" class="ChainCodeOper" href="javascript:void(0);" ng-click=chainCodeInvoke("Deploy","Go",'+id+',"init");>$1&nbsp;<i class="fa fa-2x fa fa-external-link" aria-hidden="true"></i></a>\n')
+						.replace(/(.*func.*Invoke.*{.*)/i,'<a title="Invoke" class="ChainCodeOper" href="javascript:void(0);" ng-click=chainCodeInvoke("Invoke","Go",'+id+',"invoke");>$1&nbsp;<i class="fa fa-2x fa-arrows-alt" aria-hidden="true"></i>\n</a>')
+						.replace(/(.*func.*query.*{.*)/i,'<a title="Query" class="ChainCodeOper" href="javascript:void(0);" ng-click=chainCodeInvoke("Query","Go",'+id+',"query");>$1&nbsp;<i class="fa fa-2x fa-question-circle" aria-hidden="true"></i>\n</a>')
+					else
+						ledgerData.chainCodes[id].srcCode = d.replace(/\/\*/g,'<span class="ChainCodeComm">\/\*').replace(/\*\//g,'\*\/</span>')
+						.replace(/(\S+.*init.*ChaincodeStub.*{.*)/i,'<a title="Deploy" class="ChainCodeOper" href="javascript:void(0);" ng-click=chainCodeInvoke("Deploy","Java",'+id+',"init");>$1&nbsp;<i class="fa fa-2x fa-external-link" aria-hidden="true"></i></a>\n')
+						.replace(/(\S+.*run.*ChaincodeStub.*{.*)/i,'<a title="Invoke" class="ChainCodeOper" href="javascript:void(0);" ng-click=chainCodeInvoke("Invoke","Java",'+id+',"");>$1&nbsp;<i class="fa fa-2x fa-arrows-alt" aria-hidden="true"></i></a>\n')
+						.replace(/(\S+.*query.*ChaincodeStub.*{.*)/i,'<a title="Query" class="ChainCodeOper" href="javascript:void(0);" ng-click=chainCodeInvoke("Query","Java",'+id+',"query");>$1&nbsp;<i class="fa fa-2x fa-question-circle" aria-hidden="true"></i></a>\n')
+					document.getElementById('chainCode'+id).innerHTML = '<pre>'+ledgerData.chainCodes[id].srcCode+'</pre>';
+					$compile( document.getElementById('chainCode'+id) )($scope);
+					
+	
+					$scope.$apply();
+				  })
+				  .fail(function() {
+					
+				  })
+				  .always(function() {
+					
+				  });
+				 /*$http.get(REST_ENDPOINT +"/chainCode/src/:"+ ledgerData.chainCodes[id].id, {responseType: 'arraybuffer'}).then(function(code) {
+					ledgerData.chainCodes[id].srcCode = code.data;
+					$scope.$apply();
+			   });*/
+			} 
+			return true;
+		}
+		
+		
+var chainCodeDialog;
+$( function() {
+    var form,
+ 
+      // From http://www.whatwg.org/specs/web-apps/current-work/multipage/states-of-the-type-attribute.html#e-mail-state-%28type=email%29
+      emailRegex = /^[a-zA-Z0-9.!#$%&'*+\/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/,
+      name = $( "#name" ),
+      email = $( "#email" ),
+      password = $( "#password" ),
+      allFields = $( [] ).add( name ).add( email ).add( password ),
+      tips = $( ".validateTips" );
+ 
+    function updateTips( t ) {
+      tips
+        .text( t )
+        .addClass( "ui-state-highlight" );
+      setTimeout(function() {
+        tips.removeClass( "ui-state-highlight", 1500 );
+      }, 500 );
+    }
+ 
+    function checkLength( o, n, min, max ) {
+      if ( o.val().length > max || o.val().length < min ) {
+        o.addClass( "ui-state-error" );
+        updateTips( "Length of " + n + " must be between " +
+          min + " and " + max + "." );
+        return false;
+      } else {
+        return true;
+      }
+    }
+ 
+    function checkRegexp( o, regexp, n ) {
+      if ( !( regexp.test( o.val() ) ) ) {
+        o.addClass( "ui-state-error" );
+        updateTips( n );
+        return false;
+      } else {
+        return true;
+      }
+    }
+ 
+    function submitTxn() {
+      /*var valid = true;
+      allFields.removeClass( "ui-state-error" );
+ 
+      valid = valid && checkLength( name, "username", 3, 16 );
+      valid = valid && checkLength( email, "email", 6, 80 );
+      valid = valid && checkLength( password, "password", 5, 16 );
+ 
+      valid = valid && checkRegexp( name, /^[a-z]([0-9a-z_\s])+$/i, "Username may consist of a-z, 0-9, underscores, spaces and must begin with a letter." );
+      valid = valid && checkRegexp( email, emailRegex, "eg. ui@jquery.com" );
+      valid = valid && checkRegexp( password, /^([0-9a-zA-Z])+$/, "Password field only allow : a-z 0-9" );
+ 
+      if ( valid ) {
+        $( "#users tbody" ).append( "<tr>" +
+          "<td>" + name.val() + "</td>" +
+          "<td>" + email.val() + "</td>" +
+          "<td>" + password.val() + "</td>" +
+        "</tr>" );
+        chainCodeDialog.dialog( "close" );
+      }
+      return valid;*/
+	  $scope.status = 'P';
+	  $scope.dataShow = false;
+	  $scope.$apply();
+	  var chainCodeArgs = {
+		  "Args" : []
+	  }
+	  for(var i = 0; i < $scope.fields.length; i++) {
+		  chainCodeArgs.Args.push($scope.fields[i].value);
+	  }
+	  $scope.dataShow = false;
+	  $scope.resp = null;
+	  $.post(REST_ENDPOINT +"/chainCode/invoke/"+ $scope.chainCodeId + ':'+$scope.chainCodeOper ,
+		chainCodeArgs,
+		function(resp, status){
+			//alert("Data: " + data + "\nStatus: " + status);
+			resp = resp.replace(/\\"/g,'"').replace(/"{/g,'{').replace(/}"/g,'}');
+			data = JSON.parse(resp);
+			if(data.success) {
+				$scope.status = 'S';
+				$scope.resp = data.success;
+			} else if(data.error) {
+				$scope.status = 'E';
+				$scope.resp = data.error;
+			}
+			if(data.data) {
+				$scope.dataShow = true;
+				$scope.$apply();
+				if (typeof data.data == 'object') {
+
+				  if(typeof data.data == 'Array')
+					buildHtmlTable(data.data,'#ccResults');
+				  else 
+					buildHtmlTable( [ data.data],'#ccResults');
+
+				}else{
+
+				  $('#ccResults').html('<b>'+data.data+'</b>');
+
+				}
+				
+			}
+				
+			$scope.$apply();
+		});
+    }
+ 
+    // Builds the HTML Table out of myList.
+function buildHtmlTable(myList,selector) {
+	$(selector).html('');
+	var columns = addAllColumnHeaders(myList, selector);
+
+    for (var i = 0 ; i < myList.length ; i++) {
+        var row$ = $('<tr/>');
+        for (var colIndex = 0 ; colIndex < columns.length ; colIndex++) {
+            var cellValue = myList[i][columns[colIndex]];
+
+            if (cellValue == null) { cellValue = ""; }
+
+            row$.append($('<td/>').html(cellValue.replace(/"/g,'')));
+        }
+        $(selector).append(row$);
+    }
+}
+
+// Adds a header row to the table and returns the set of columns.
+// Need to do union of keys from all records as some records may not contain
+// all records
+function addAllColumnHeaders(myList, selector)
+{
+    var columnSet = [];
+    var headerTr$ = $('<tr/>');
+	for (var i = 0 ; i < myList.length ; i++) {
+        var rowHash = myList[i];
+        for (var key in rowHash) {
+            if ($.inArray(key, columnSet) == -1){
+                columnSet.push(key);
+                headerTr$.append($('<th/>').html(key));
+            }
+        }
+    }
+    $(selector).append(headerTr$);
+
+    return columnSet;
+}
+
+	
+    chainCodeDialog = $( "#chainCodeForm" ).dialog({
+      autoOpen: false,
+      modal: false,
+	  minWidth: 400,
+      buttons: {
+        "Submit": submitTxn,
+        Cancel: function() {
+          chainCodeDialog.dialog( "close" );
+        }
+      },
+      close: function() {
+        form[ 0 ].reset();
+        allFields.removeClass( "ui-state-error" );
+      }
+    });
+ 
+    form = chainCodeDialog.find( "form" ).on( "submit", function( event ) {
+      event.preventDefault();
+      submitTxn();
+    });
+ 
+  } );
+  
+
+})
 // used to keep navigation menu displayed horizontally when resolution change from menu button to navigation bar, runs whenever window resizes
 function restore() {
 	var width = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
@@ -912,3 +1303,5 @@ Chart.defaults.global.defaultFontColor = '#fff';
 function randomColor() {
 	return'rgb(' + (Math.floor(Math.random() * 256)) + ',' + (Math.floor(Math.random() * 256)) + ',' + (Math.floor(Math.random() * 256)) + ')';
 }
+
+

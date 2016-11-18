@@ -73,6 +73,14 @@ module.exports = function(grunt) {
                                 dest: 'webcontent/static/scripts'
                         }]
                 },
+                jquery: {
+                        files: [{
+                                expand: true,
+                                cwd: 'resources/bower_components/jquery/dist/',
+                                src: ['jquery.min.js'],
+                                dest: 'webcontent/static/scripts'
+                        }]
+                },
                 angular: {
                         files: [{
                                 expand: true,

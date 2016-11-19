@@ -182,46 +182,47 @@ var getLedgerInfo = function(callBk) {
 	}
 	try {
 		var currHeight = ledgerData.chain.height;
-
-		peerIntf.chain(
-			function(obj) {
-				ledgerData.chain = obj;
-				peerIntf.peers(
-					function(obj) {
-						ledgerData.peers = obj;
-						//console.log('height : '+ledgerData.chain.height);
-						if(initial) {
-							var start = 0;
-							if (ledgerData.chain.height > 100)
-								start = ledgerData.chain.height - 99;
-							//dont load all the blocks. only the latest 100.
-							for (var i = 0; i < start; i++)
-								ledgerData.blocks.push(null);
-							currHeight = start;
-							initial = false;
-						}
-						//console.log('loading ',currHeight);
-						var blockFunc = function(obj) {
-							ledgerData.blocks.push(obj);
-							if(ledgerData.blocks.length > 100) {
-								ledgerData.blocks[ledgerData.blocks.length - 101] = null;
+		
+		peerIntf.availableChainCodes( function( list) {
+			//console.log('chaincodes :',list);
+			ledgerData.chainCodes = list;
+			peerIntf.chain(
+				function(obj) {
+					ledgerData.chain = obj;
+					peerIntf.peers(
+						function(obj) {
+							ledgerData.peers = obj;
+							//console.log('height : '+ledgerData.chain.height);
+							if(initial) {
+								var start = 0;
+								if (ledgerData.chain.height > 100)
+									start = ledgerData.chain.height - 99;
+								//dont load all the blocks. only the latest 100.
+								for (var i = 0; i < start; i++)
+									ledgerData.blocks.push(null);
+								currHeight = start;
+								initial = false;
 							}
-							currHeight = ledgerData.blocks.length;
-							if(currHeight == ledgerData.chain.height) {
-								peerIntf.availableChainCodes( function( list) {
-									//console.log('chaincodes :',list);
-									ledgerData.chainCodes = list;
+							//console.log('loading ',currHeight);
+							var blockFunc = function(obj) {
+								ledgerData.blocks.push(obj);
+								if(ledgerData.blocks.length > 100) {
+									ledgerData.blocks[ledgerData.blocks.length - 101] = null;
+								}
+								currHeight = ledgerData.blocks.length;
+								if(currHeight == ledgerData.chain.height) {
 									callBk(ledgerData);
-									locked = false;
-								});
-							} else
-								peerIntf.block((currHeight++),blockFunc);
-						}
-						if(currHeight != ledgerData.chain.height)
-							peerIntf.block(currHeight,blockFunc);
+									locked = false;		
+								} else
+									peerIntf.block((currHeight++),blockFunc);
+							}
+							if(currHeight != ledgerData.chain.height)
+								peerIntf.block(currHeight,blockFunc);
 
-					}
-				)
+						}
+					)
+				}
+			);
 			}
 		);
 	} catch(e) {

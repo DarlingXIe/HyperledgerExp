@@ -77,9 +77,8 @@ limitations under the License.-->
 							<td data-label="Previous Hash">{{ info[$index].previousBlockHash | limitTo: 17}}...</td>
 							<td data-label="Log">
 
-							<button ng-click="Update_selected_block($index)"> View </button>
-							<form action='#openModal2' id="change2" style="display:none;>
-								 <input type="submit" value="Details">
+							<form  action='#openModal2' id="change2">
+								  <button type="submit" formaction='#openModal2' ng-click="Update_selected_block($index)"> View </button>
 							</form>
 								<div id="openModal2" class="modalDialog" style="font-size: 120%; text-align:left;">
 								<div>
@@ -348,9 +347,9 @@ limitations under the License.-->
 								<td data-label="UUID">{{ trans[$index].txid | limitTo : 13}}...</td>
 								<td data-label="Details">
 
-										<button ng-click="Update_transaction_selection_index($index)"> Expand </button>
-									<form action='#openModal3' id="change3" style="display:none">
-										<input type="submit" value="Full Details">
+										
+									<form action='#openModal3' id="change3">
+										<button formaction='#openModal3' type="submit" ng-click="Update_transaction_selection_index($index)"> Expand </button>
 									</form>
 
 

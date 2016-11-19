@@ -872,7 +872,6 @@ App.controller("BLOCKS",
 			//$scope.selected = x;
 			$scope.infoc = angular.copy($scope.info[idx]);
 			$scope.infoc.blockNum  = $scope.size - idx -1;
-			document.forms["change2"].submit();
 		}
 	}
 )
@@ -905,7 +904,6 @@ App.controller("TRANSACTIONS",
  		// update seleted2 index and update form with corresponding transaction info
  		$scope.Update_transaction_selection_index = function(x){
 			$scope.transs = angular.copy($scope.trans[x]);
-			document.forms["change3"].submit();
 		}
 })
 

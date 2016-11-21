@@ -389,9 +389,9 @@ limitations under the License.-->
 		</div>
 		<div id="chainCodes" >
 				<h3 ng-repeat-start="items in chainCodes" ng-click=getChainCode($index);>
-					Name:<span style="color:green">{{ chainCodes[$index].name}}</span> &nbsp; Language : <span ng-show="chainCodes[$index].lang=='java'" style="color:#BA4777">JAVA</span><span ng-show="chainCodes[$index].lang=='go'" style="color:#5047BA">GO</span>
-					&nbsp; Status : <span ng-show="chainCodes[$index].status=='D'" style="color:#1AB876">Deployed</span><span ng-show="chainCodes[$index].status=='U'" style="color:#B0AD69">Undeployed</span>
-					&nbsp; TxCount : <span ng-show="chainCodes[$index].txCount > 0" style="color:#1ED637">{{chainCodes[$index].txCount}}</span><span ng-show="chainCodes[$index].txCount <= 0" style="color:#8490A3">{{chainCodes[$index].txCount}}</span>
+					Name:<span class="green">{{ chainCodes[$index].name}}</span> &nbsp; Language : <span ng-show="chainCodes[$index].lang=='java'" class="purple">JAVA</span><span ng-show="chainCodes[$index].lang=='go'" style="green">GO</span>
+					&nbsp; Status : <span ng-show="chainCodes[$index].status=='D'" class="green">Deployed</span><span ng-show="chainCodes[$index].status=='U'" class="grey">Undeployed</span>
+					&nbsp; TxCount : <span ng-show="chainCodes[$index].txCount > 0" class="green">{{chainCodes[$index].txCount}}</span><span ng-show="chainCodes[$index].txCount <= 0" class="green">{{chainCodes[$index].txCount}}</span>
 				</h3>
 				<div ng-repeat-end > 
 					<div ng-show="chainCodes[$index].srcCode==''">Loading chaincode {{ chainCodes[$index].name}}. Please wait...</div>

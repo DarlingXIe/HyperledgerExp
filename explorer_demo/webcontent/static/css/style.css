@@ -963,6 +963,14 @@ a.ChainCodeOper:active {
 	color :red;
 }
 
+.purple {
+	color :purple;
+}
+
+.grey {
+	color :grey;
+}
+
 .green {
 	color :green;
 }
@@ -974,6 +982,32 @@ a.ChainCodeOper:active {
 .green {
 	color :green;
 }
+
+.ui-state-active > .red {
+	color:lightred;
+}
+
+.ui-state-active > .grey {
+	color:bisque;
+}
+
+.ui-state-active > .purple {
+	color:aqua;
+}
+
+.ui-state-active > .green {
+	color:aquamarine;
+}
+
+.ui-state-active > .purple {
+	color:lightpurple;
+}
+
+
+.ui-state-active > .blue {
+	color:lightblue;
+}
+
 
 td.label {
 	text-align:right!important;

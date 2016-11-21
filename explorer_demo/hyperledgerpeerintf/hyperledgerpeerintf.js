@@ -125,13 +125,16 @@ HyperledgerPeerIntf.prototype.chainCodeDeploy = function(id,argsStr,callBk) {
 		if(this.chainCodes[id].lang == 'go') {
 			var path = this.chainCodes[id].file.replace(/(.*)\/.*\.go/,'$1').substring(goChaincodePathLen);
 			console.log('path '+ path)
-			var cmd = 'peer chaincode deploy -p '+path + ' -c '+argsStr.replace(/.*:\[(.*?),(.*)]/,'{"Function":$1,"Args":[$2]');
+			var cmd = 'peer chaincode deploy -p '+path;
+			argsStr = argsStr.replace(/.*:\[(.*?),(.*)]/,'{"Function":$1,"Args":[$2]');
 		} else if(this.chainCodes[id].lang == 'java') {
 			var path = this.chainCodes[id].file.replace(/(.*)\/src\/.*/i,'$1');
 			var cmd = 'peer chaincode deploy -l java -p '+path + ' -c '+argsStr;
 		}
 		console.log('Deploying chaincode ['+cmd+']');
 		var c = cmd.split(" ");
+		c.push('-c');
+		c.push(argsStr);
 		var cc = this.chainCodes;
 		run_cmd(c[0],c.slice(1,c.length),function(resp) {
 			if(resp.indexOf('\"error\"') > 0) {
@@ -167,13 +170,15 @@ HyperledgerPeerIntf.prototype.chainCodeInvoke = function(id,argsStr,callBk) {
 		}
 		if(this.chainCodes[id].lang == 'go') {
 			var path = this.chainCodes[id].file.replace(/(.*)\/.*\.go/,'$1');
-			var cmd = 'peer chaincode invoke -n '+this.chainCodes[id].chainId + ' -c '+argsStr;;
+			var cmd = 'peer chaincode invoke -n '+this.chainCodes[id].chainId;
 		} else if(this.chainCodes[id].lang == 'java') {
 			var path = this.chainCodes[id].file.replace(/(.*)\/src\/.*/i,'$1');
-			var cmd = 'peer chaincode invoke -l java -n '+this.chainCodes[id].chainId + ' -c '+argsStr;
+			var cmd = 'peer chaincode invoke -l java -n '+this.chainCodes[id].chainId;
 		}
 		console.log('Invoking chaincode ['+cmd+']');
 		var c = cmd.split(" ");
+		c.push('-c');
+		c.push(argsStr);
 		var cc = this.chainCodes;
 		run_cmd(c[0],c.slice(1,c.length),function(resp) {
 			if(resp.indexOf('\"error\"') > 0) {
@@ -203,13 +208,15 @@ HyperledgerPeerIntf.prototype.chainCodeQuery = function(id,argsStr,callBk) {
 		}
 		if(this.chainCodes[id].lang == 'go') {
 			var path = this.chainCodes[id].file.replace(/(.*)\/.*\.go/,'$1');
-			var cmd = 'peer chaincode query -n '+this.chainCodes[id].chainId + ' -c '+argsStr;
+			var cmd = 'peer chaincode query -n '+this.chainCodes[id].chainId;
 		} else if(this.chainCodes[id].lang == 'java') {
 			var path = this.chainCodes[id].file.replace(/(.*)\/src\/.*/i,'$1');
-			var cmd = 'peer chaincode query -l java -n '+this.chainCodes[id].chainId + ' -c '+argsStr;
+			var cmd = 'peer chaincode query -l java -n '+this.chainCodes[id].chainId;
 		}
 		//console.log('Querying chaincode ['+cmd+']');
 		var c = cmd.split(" ");
+		c.push('-c');
+		c.push(argsStr);
 		var cc = this.chainCodes;
 		run_cmd(c[0],c.slice(1,c.length),function(resp) {
 			if(resp.indexOf('\"error\"') > 0) {

@@ -24,6 +24,7 @@ app.use(express.static(__dirname+'/webcontent/static/scripts'));
 app.use(express.static(__dirname+'/webcontent/static/css'));
 app.use(express.static(__dirname+'/webcontent/static/images'));
 app.use(express.static(__dirname+'/webcontent/static/scripts/socket.io-client'));
+app.use(express.static(__dirname+'/webcontent/static/scripts/socket.io-client/dist'));
 app.use(express.static(__dirname+'/webcontent/static/scripts/angular'));
 app.use(express.static(__dirname+'/webcontent/static/scripts/angular-animate'));
 app.use(express.static(__dirname+'/webcontent/static/jquery-ui-1.12.1.custom'));

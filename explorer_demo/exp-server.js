@@ -129,6 +129,47 @@ app.get('/chainCode/src/:id', function(req, res) {
 	}
 });
 
+var logSockets = {};
+var cachedChunks = new Array();
+var peerLogDir = process.env.PEER_LOG_DIR || '/peerLogs';
+app.get('/logs/peer/:id', function(req, res) {
+	var id = null;
+	try { 
+		var args = req.params.id.split(':');
+		id =  args[1];
+		//console.log(req.params.id);
+		if(!logSockets.id) {
+			var tail = require('child_process').spawn("tail", ["-f", peerLogDir+'/'+id+'.log']);
+			logSockets.id = {
+				"socketName" : "logSocket/"+id,
+				"count" : 1,
+				"pid" :  tail._handle.pid
+
+			}
+			console.log(" pid ",tail._handle.pid)
+			tail.stdout
+			  .on('data', function (chunk) {
+				 //console.log(chunk.toString('utf-8'));
+				//console.log(io);
+				chunk = chunk.toString('utf-8')
+				cachedChunks.push(chunk);
+				if(cachedChunks.length > 5)
+					cachedChunks = cachedChunks.slice(cachedChunks.length -5,cachedChunks.length);
+				io.emit(logSockets.id.socketName,chunk);
+			  });
+			io.on('logClosed', function (p) {
+				console.log('closed ', p);
+			})
+		} else {
+			for (var i = 0; i < cachedChunks.length; i++)
+				io.emit(logSockets.id.socketName,cachedChunks[i]);
+		}
+		logSockets.id.count++;
+		res.send(logSockets.id.socketName);
+	} catch(e) {
+		console.log(' Error opening log socket for '+id,e );
+	}
+});
 app.post('/chainCode/invoke/:req', function(req, res) {
 	try {
 		console.log(req.params);
@@ -233,14 +274,14 @@ var getLedgerInfo = function(callBk) {
 }
 
 var newBlockArrived = true; //initial value is true
-
+var server = null, io= null;
 //initial load
 getLedgerInfo( function () {
 	try {
 		//console.log('Ledger data retrieved.');
 		//start listener and Web sockets for updates
-		var server = require('http').createServer(app);
-		var io = require('socket.io')(server);
+		server = require('http').createServer(app);
+		io = require('socket.io')(server);
 		setInterval(
 			function() {
 				var prevPeers = ledgerData.peers;

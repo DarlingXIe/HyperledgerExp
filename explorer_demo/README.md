@@ -29,3 +29,9 @@ set HTTP_PORT=<web server port. Default is 9090 if not set>
 set HYP_REST_ENDPOINT=<REST endpoint. Default is http://127.0.0.1:7050 if not set>
 node exp-server.js
 ```
+
+Peer console support:
+Added dialog on the frontend to show peer logs. Logs have to be saved to the file. Log folder has to be passed as PEER_LOG_DIR  env variable. If not set, '/peerLogs' is assumed the log folder for peer. Peer has to be started with this command. Log file name should be <peer name>.log. For example, the log file for peer named jdoe with default log folder will be /peerLogs/jdoe.log. Peer start command for logs below:
+
+export PEER_LOG_DIR=/peerLogs;peer node start 2>&1 | tee $PEER_LOG_DIR/jdoe.log
+

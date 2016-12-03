@@ -81,6 +81,7 @@ App.factory("REST_SERVICE_TRANSACTIONS", function($http){
 and then puts the all the transactions from the 10 recent blocks into an array that gets broadcasted to the TRANSACTION controller that displays it. Likewise, chain
 information also broadcasted to controllers one retrieved
 */
+var socket = null;
 App.factory("SHARE_INFORMATION", function($rootScope){
 	var BlockInfo = {};
 
@@ -115,7 +116,7 @@ App.factory("SHARE_INFORMATION", function($rootScope){
 		newData = false;
 	}
 	window.addEventListener("load", function () {
-		var socket = io('http://'+window.location.host);
+		socket = io('http://'+window.location.host);
 		socket.on('stats', function (msg)
 		{
 			//console.log(' OLD ' , statsData);
@@ -352,9 +353,58 @@ App.controller("NETWORK",
 			},20);
 
  		});
+		
+		var subscribedLogs = [];
+		$scope.openLogDlg = function(idx,peerName) {
+			
+			$.get( "/logs/peer/:"+ peerName )
+				  .done(function(sock) {
+					$( "#logTxt"+peerName ).text('');
+					if(!subscribedLogs[peerName])
+						socket.on(sock , function(newLg) {
+							var lg = $( "#logTxt"+peerName ).text();
+							$( "#logTxt"+peerName ).text(lg+newLg)
+						});
+					subscribedLogs[peerName] = true;
+					var dlgId= $( "#logDlg"+peerName ).dialog({
+					  autoOpen: true,
+					  modal: false,
+					  minWidth: 600,
+					 close: function() {
+						 socket.emit('logClosed',peerName);
+					  }
+					});
+					$(".ui-dialog").css({
+						position: 'fixed',
+						top: 0,
+						left:0
+					});
+				  });
+			
+			}
 	}
 )
 
+ $(document).scroll(function (e) {
+
+        if ($(".ui-widget-overlay")) //the dialog has popped up in modal view
+        {
+            //fix the overlay so it scrolls down with the page
+            $(".ui-widget-overlay").css({
+                position: 'fixed',
+                top: '0'
+            });
+
+            //get the current popup position of the dialog box
+            pos = $(".ui-dialog").position();
+
+            //adjust the dialog box so that it scrolls as you scroll the page
+            $(".ui-dialog").css({
+                position: 'fixed',
+                top: pos.y
+            });
+        }
+    });
 // directive for dependency injection, creates html element that gets injected into index.html with charts
 App.directive("barsChart", function ($parse) {
      var object = {
@@ -987,12 +1037,15 @@ App.controller("CHAINCODES",
 		$scope.dlgOper = null;
 		$scope.fields = [];
 		$scope.chainCodeArgs = [];
-		
+		var chainCodeInvokeCache = [];
+		$scope.cachedInvoke = '';
 		$scope.chainCodeInvoke = function(type,lang,id,func) {
 			$scope.dlgOper = null;
 			$scope.status = '';
 			$scope.resp = null;
 			$('#ccResults').html('');
+			$scope.cacheKey = type+lang+name+id+func
+			$scope.cachedInvoke = chainCodeInvokeCache[$scope.cacheKey];
 			$scope.dataShow = false;
 			$scope.chainCodeId = ledgerData.chainCodes[id].id;
 			$scope.chainCodeOper = type;
@@ -1053,13 +1106,20 @@ App.controller("CHAINCODES",
 						func = "";//only for the first parameter
 				}
 			}
-			$scope.fields = [];
-			$scope.normalizeFields();
+			
+			if($scope.cachedInvoke) {
+				$scope.fields = $scope.cachedInvoke;
+			} else {
+				$scope.fields = [];
+				$scope.normalizeFields();
+			}
+			
 			try {
 				chainCodeDialog.dialog( "close" );
 			} catch(e) {
 				
 			}
+			
 			chainCodeDialog.dialog({'title':ledgerData.chainCodes[id].name + ' '+$scope.dlgOper});
 			chainCodeDialog.dialog("open");
 		}
@@ -1077,7 +1137,7 @@ App.controller("CHAINCODES",
 		
 		$scope.getChainCode = function(id) {
 			if(!ledgerData.chainCodes[id].srcCode) {
-				console.log(id);
+				//console.log(id);
 				$.ajax( REST_ENDPOINT +"/chainCode/src/:"+ ledgerData.chainCodes[id].id )
 				  .done(function(d) {
 					if(ledgerData.chainCodes[id].lang == 'go')
@@ -1175,6 +1235,7 @@ $( function() {
         chainCodeDialog.dialog( "close" );
       }
       return valid;*/
+	  $scope.cacheKey
 	  $scope.status = 'P';
 	  $scope.dataShow = false;
 	  $scope.$apply();
@@ -1216,8 +1277,10 @@ $( function() {
 				}
 				
 			}
-				
+			
 			$scope.$apply();
+			chainCodeInvokeCache[$scope.cacheKey] = $scope.fields;
+	  
 		});
     }
  

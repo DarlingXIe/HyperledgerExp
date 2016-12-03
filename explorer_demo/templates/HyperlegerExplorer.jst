@@ -195,6 +195,7 @@ limitations under the License.-->
 							<th> Address</th>
 							<th> Type</th>
 							<th> PKIID</th>
+							<th/>
 						</tr>
 					</thead>
 					<tbody>
@@ -203,6 +204,11 @@ limitations under the License.-->
 							<td data-label="Address"> {{info.peers[$index].address }}  </td>
 							<td data-label="Type"> {{info.peers[$index].type}} </td>
 							<td data-label="PKIID"> {{info.peers[$index].pkiID}} </td>
+							<td><a title="Console" href=# ng-click=openLogDlg('$index',info.peers[$index].ID.name)><i style="color:blue;font-weight:bold;" class="fa fa-television fa-lg" aria-hidden="true"></i><a></button>
+							<div style="height:0;width:0" id="logDlg{{info.peers[$index].ID.name}}" title='Console for peer {{info.peers[$index].ID.name}}'>
+								<div> <pre class="tail" id="logTxt{{info.peers[$index].ID.name}}"></pre> </div>
+							</div>
+							</td>
 						</tr>
 					</tbody>
 				</table>
@@ -401,8 +407,8 @@ limitations under the License.-->
 		<div id="chainCodeForm" title="{{dlgOper}}">
 		  <p class="validateTips">All form fields are required.</p>
 		 
-		  <form>
-			<table>
+		 <form>
+			<table id="chainCodeFormInput">
 			   <tr ng-repeat="items in fields">
 			  <td class="label"><label  for="{{ items.name | split:'[':0 }}">{{ items.name | split:'[':0 }}</label></td>
 			  <td class="field">

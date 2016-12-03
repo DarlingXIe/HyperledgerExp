@@ -1016,3 +1016,15 @@ td.label {
 td.field {
 	text-align:left!important;
 }
+
+pre.tail
+{ 
+border: 0px;
+font-size:12px !important;
+font-weight: normal !important;
+font-family: "Times New Roman", Times, serif !important;
+height: 300px;
+padding: 0.5em;
+overflow-x: auto;
+position: relative;
+overflow-y: auto; }

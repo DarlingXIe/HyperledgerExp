@@ -65,7 +65,7 @@ HyperledgerPeerIntf.prototype.block = function(blockNum,callBk) {
 	this.restCall('/chain/blocks/'+blockNum,callBk);
 }
 
-var ROOT_GO_PATH = '/opt/gopath'; ///c/Go for windows
+var ROOT_GO_PATH = process.env.GOPATH;
 HyperledgerPeerIntf.prototype.availableChainCodes = function(callBk) {
   if(!this.chainCodes)
 	{

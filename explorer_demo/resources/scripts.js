@@ -356,10 +356,9 @@ App.controller("NETWORK",
 		
 		var subscribedLogs = [];
 		$scope.openLogDlg = function(idx,peerName) {
-			
+			$( "#logTxt"+peerName ).text('');
 			$.get( "/logs/peer/:"+ peerName )
 				  .done(function(sock) {
-					$( "#logTxt"+peerName ).text('');
 					if(!subscribedLogs[peerName])
 						socket.on(sock , function(newLg) {
 							var lg = $( "#logTxt"+peerName ).text();

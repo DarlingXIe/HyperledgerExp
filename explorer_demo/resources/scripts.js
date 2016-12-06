@@ -356,7 +356,7 @@ App.controller("NETWORK",
 		
 		var subscribedLogs = [];
 		$scope.openLogDlg = function(idx,peerName) {
-			$( "#logTxt"+peerName ).text('');
+			
 			$.get( "/logs/peer/:"+ peerName )
 				  .done(function(sock) {
 					if(!subscribedLogs[peerName])
@@ -974,9 +974,7 @@ App.controller("CHAINCODES",
 		
 		$scope.status = '';
 		
-		// handle recieving information from the BLOCKS controller that initally calls the http requests
- 		$scope.$on("handle_broadcast",function(){
- 			
+		var checkOrUpdateChaincodes = function() {
 			if($scope.chainCodes) {
 				for(var i = 0; i < $scope.chainCodes.length; i++) {
 					if($scope.chainCodes[i] && ledgerData.chainCodes[i]) {
@@ -992,8 +990,16 @@ App.controller("CHAINCODES",
 			$scope.$apply();
 	
 			$( "#chainCodes" ).accordion( { "active":"false","icons":icons,collapsible: true,heightStyle: "content"});
+		}
+		// handle recieving information from the BLOCKS controller that initally calls the http requests
+ 		$scope.$on("handle_broadcast",function(){
+ 			
+			checkOrUpdateChaincodes();
 			
  		});
+		
+		//initial view
+		setTimeout(function() {checkOrUpdateChaincodes(); }, 50);
 		
 		var copyFormValuesToModel = function () {
 			var modelIdx = 0;

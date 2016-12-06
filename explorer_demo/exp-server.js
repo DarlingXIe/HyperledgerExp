@@ -24,7 +24,6 @@ app.use(express.static(__dirname+'/webcontent/static/scripts'));
 app.use(express.static(__dirname+'/webcontent/static/css'));
 app.use(express.static(__dirname+'/webcontent/static/images'));
 app.use(express.static(__dirname+'/webcontent/static/scripts/socket.io-client'));
-app.use(express.static(__dirname+'/webcontent/static/scripts/socket.io-client/dist'));
 app.use(express.static(__dirname+'/webcontent/static/scripts/angular'));
 app.use(express.static(__dirname+'/webcontent/static/scripts/angular-animate'));
 app.use(express.static(__dirname+'/webcontent/static/jquery-ui-1.12.1.custom'));
@@ -183,7 +182,7 @@ app.post('/chainCode/invoke/:req', function(req, res) {
 		if(oper == 'Deploy' ) {
 			peerIntf.chainCodeDeploy(id, JSON.stringify(req.body) , function (r) {
 				if(r.error) {
-					console.log("Error in deploying chainCode ",e)
+					console.log("Error in deploying chainCode ",r.error)
 					res.send('{"error" : "Failed to deploy chaincode."}');
 				} else {
 					res.send('{"success" : "Successfully deployed chaincode."}');		
@@ -192,7 +191,7 @@ app.post('/chainCode/invoke/:req', function(req, res) {
 		} else if(oper == 'Invoke' ) {
 			peerIntf.chainCodeInvoke(id, JSON.stringify(req.body) , function (r) {
 				if(r.error) {
-					console.log("Error in invoking chainCode ",e)
+					console.log("Error in invoking chainCode ",r.error)
 					res.send('{"error" : "Failed to incoke chaincode."}');
 				} else {
 					res.send('{"success" : "Successfully invoked chaincode."}');		
@@ -234,7 +233,6 @@ var getLedgerInfo = function(callBk) {
 					peerIntf.peers(
 						function(obj) {
 							ledgerData.peers = obj;
-							//console.log('height : '+ledgerData.chain.height);
 							if(initial) {
 								var start = 0;
 								if (ledgerData.chain.height > 100)
@@ -258,12 +256,12 @@ var getLedgerInfo = function(callBk) {
 								} else
 									peerIntf.block((currHeight++),blockFunc);
 							}
+							//console.log('height : '+ledgerData.chain.height,' currHeight: ',currHeight);
 							if(currHeight != ledgerData.chain.height)
 								peerIntf.block(currHeight,blockFunc);
 
 						}
 					)
-				}
 			);
 			}
 		);

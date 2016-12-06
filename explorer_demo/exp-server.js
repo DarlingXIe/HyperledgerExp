@@ -24,6 +24,7 @@ app.use(express.static(__dirname+'/webcontent/static/scripts'));
 app.use(express.static(__dirname+'/webcontent/static/css'));
 app.use(express.static(__dirname+'/webcontent/static/images'));
 app.use(express.static(__dirname+'/webcontent/static/scripts/socket.io-client'));
+app.use(express.static(__dirname+'/webcontent/static/scripts/socket.io-client/dist'));
 app.use(express.static(__dirname+'/webcontent/static/scripts/angular'));
 app.use(express.static(__dirname+'/webcontent/static/scripts/angular-animate'));
 app.use(express.static(__dirname+'/webcontent/static/jquery-ui-1.12.1.custom'));
@@ -200,7 +201,7 @@ app.post('/chainCode/invoke/:req', function(req, res) {
 		} else if(oper == 'Query' ) {
 			peerIntf.chainCodeQuery(id, JSON.stringify(req.body) , function (r) {
 				if(r.error) {
-					console.log("Error in querying chainCode ",e)
+					console.log("Error in querying chainCode ",r.error)
 					res.send('{"error" : "Failed to query chaincode."}');
 				} else {
 					res.send('{"success" : "Successfully queried chaincode." , "data" : ' +JSON.stringify(r.data)+'}');		
@@ -233,6 +234,7 @@ var getLedgerInfo = function(callBk) {
 					peerIntf.peers(
 						function(obj) {
 							ledgerData.peers = obj;
+							//console.log('height : '+ledgerData.chain.height);
 							if(initial) {
 								var start = 0;
 								if (ledgerData.chain.height > 100)
@@ -256,12 +258,12 @@ var getLedgerInfo = function(callBk) {
 								} else
 									peerIntf.block((currHeight++),blockFunc);
 							}
-							//console.log('height : '+ledgerData.chain.height,' currHeight: ',currHeight);
 							if(currHeight != ledgerData.chain.height)
 								peerIntf.block(currHeight,blockFunc);
 
 						}
 					)
+				}
 			);
 			}
 		);

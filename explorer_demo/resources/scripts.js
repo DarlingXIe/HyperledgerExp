@@ -358,12 +358,14 @@ App.controller("NETWORK",
 		$scope.openLogDlg = function(idx,peerName) {
 			
 			$.get( "/logs/peer/:"+ peerName )
-				  .done(function(sock) {
-					if(!subscribedLogs[peerName])
-						socket.on(sock , function(newLg) {
-							var lg = $( "#logTxt"+peerName ).text();
-							$( "#logTxt"+peerName ).text(lg+newLg)
-						});
+				  .done(function(info) {
+					if(!subscribedLogs[peerName]) {
+						socket.on(info.sockName , function(newLg) {
+							var lg = $( "#logTxt"+peerName );
+							lg.text(lg.text()+newLg);
+							}); 
+					}
+					$( "#logTxt"+peerName ).text(info.currLogs);
 					subscribedLogs[peerName] = true;
 					var dlgId= $( "#logDlg"+peerName ).dialog({
 					  autoOpen: true,

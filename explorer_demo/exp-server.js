@@ -161,12 +161,12 @@ app.get('/logs/peer/:id', function(req, res) {
 			io.on('logClosed', function (p) {
 				console.log('closed ', p);
 			})
-		} else {
-			for (var i = 0; i < cachedChunks.length; i++)
-				io.emit(logSockets.id.socketName,cachedChunks[i]);
 		}
 		logSockets.id.count++;
-		res.send(logSockets.id.socketName);
+		var concatLog = '';
+		for(var i = 0; i < cachedChunks.length; i++)
+			concatLog += cachedChunks[i];
+		res.send({ "sockName" : logSockets.id.socketName, "currLogs" : concatLog});
 	} catch(e) {
 		console.log(' Error opening log socket for '+id,e );
 	}

@@ -363,11 +363,15 @@ App.controller("NETWORK",
 						socket.on(info.sockName , function(newLg) {
 							var lg = $( "#logTxt"+peerName );
 							lg.text(lg.text()+newLg);
+							lg.scrollTop(lg[0].scrollHeight);
 							}); 
 					}
-					$( "#logTxt"+peerName ).text(info.currLogs);
+					
+					var dlgTx = "#logTxt"+peerName
+					var dlgId = "#logDlg"+peerName;
+					$( dlgTx ).text(info.currLogs);
 					subscribedLogs[peerName] = true;
-					var dlgId= $( "#logDlg"+peerName ).dialog({
+					var dlg= $( dlgId ).dialog({
 					  autoOpen: true,
 					  modal: false,
 					  minWidth: 600,
@@ -380,6 +384,15 @@ App.controller("NETWORK",
 						top: 0,
 						left:0
 					});
+					$(dlgId + ' '+dlgTx)
+						  .height( $(dlgId).height() - 50)
+						  .width( $(dlgId).width() - 50);
+					$(dlgId).bind("dialogresize", function (event, ui) {
+						$(dlgId + ' '+dlgTx)
+						  .height( $(dlgId).height() - 50)
+						  .width( $(dlgId).width() - 50);
+					});
+					
 				  });
 			
 			}
